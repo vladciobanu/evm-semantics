@@ -42,8 +42,8 @@ module ETHEREUM-SIMULATION
 // the nicer input form.
 
 
-    syntax JSON ::= Int | WordStack | OpCodes | Map | Call | SubstateLogEntry
- // -------------------------------------------------------------------------
+    syntax JSON ::= Int | List | OpCodes | Map | Call | SubstateLogEntry
+ // --------------------------------------------------------------------
     rule DC:DistCommand "account" : { ACCTID: { KEY : VALUE , REST } } => DC "account" : { ACCTID : { KEY : VALUE } } ~> DC "account" : { ACCTID : { REST } } requires REST =/=K .JSONList
 
     rule DC:DistCommand "account" : { ((ACCTID:String) => #parseAddr(ACCTID)) : ACCT }
@@ -162,22 +162,22 @@ module ETHEREUM-SIMULATION
 
          <analysis> _ => .Map </analysis>
 
-         <output>     _ => .WordStack </output>
-         <memoryUsed> _ => 0          </memoryUsed>
-         <callDepth>  _ => 0          </callDepth>
-         <callStack>  _ => .List      </callStack>
-         <callLog>    _ => .Set       </callLog>
+         <output>     _ => .List </output>
+         <memoryUsed> _ => 0     </memoryUsed>
+         <callDepth>  _ => 0     </callDepth>
+         <callStack>  _ => .List </callStack>
+         <callLog>    _ => .Set  </callLog>
 
-         <program>     _ => .Map       </program>
-         <id>          _ => 0          </id>
-         <caller>      _ => 0          </caller>
-         <callData>    _ => .WordStack </callData>
-         <callValue>   _ => 0          </callValue>
-         <wordStack>   _ => .WordStack </wordStack>
-         <localMem>    _ => .Map       </localMem>
-         <pc>          _ => 0          </pc>
-         <gas>         _ => 0          </gas>
-         <previousGas> _ => 0          </previousGas>
+         <program>     _ => .Map  </program>
+         <id>          _ => 0     </id>
+         <caller>      _ => 0     </caller>
+         <callData>    _ => .List </callData>
+         <callValue>   _ => 0     </callValue>
+         <wordStack>   _ => .List </wordStack>
+         <localMem>    _ => .Map  </localMem>
+         <pc>          _ => 0     </pc>
+         <gas>         _ => 0     </gas>
+         <previousGas> _ => 0     </previousGas>
 
          <selfDestruct> _ => .Set </selfDestruct>
          <log>          _ => .Set </log>
@@ -276,7 +276,7 @@ module ETHEREUM-SIMULATION
     rule load "exec" : { "code" : ((CODE:String)  => #dasmOpCodes(#parseByteStack(CODE))) }
     rule load "exec" : { "code" : ((CODE:OpCodes) => #asMapOpCodes(CODE)) }
  // -----------------------------------------------------------------------
-    rule <k> load "exec" : { "data" : (DATA:WordStack) } => . ... </k> <callData> _ => DATA </callData>
+    rule <k> load "exec" : { "data" : (DATA:List)      } => . ... </k> <callData> _ => DATA </callData>
     rule <k> load "exec" : { "code" : (CODE:Map)       } => . ... </k> <program>  _ => CODE </program>
 
 

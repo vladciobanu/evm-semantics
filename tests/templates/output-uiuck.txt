@@ -7,7 +7,7 @@
   <analysis> .Map </analysis>
   <ethereum>
     <evm>
-      <output> .WordStack </output>
+      <output> .List </output>
       <memoryUsed> 0 </memoryUsed>
       <callDepth> 0 </callDepth>
       <callStack> .List </callStack>
@@ -17,9 +17,9 @@
         <program> .Map </program>
         <id> 0 </id>
         <caller> 0 </caller>
-        <callData> .WordStack </callData>
+        <callData> .List </callData>
         <callValue> 0 </callValue>
-        <wordStack> .WordStack </wordStack>
+        <wordStack> .List </wordStack>
         <localMem> .Map </localMem>
         <pc> 0 </pc>
         <gas> 0 </gas>
