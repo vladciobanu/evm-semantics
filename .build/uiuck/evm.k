@@ -360,12 +360,7 @@ module EVM
 
 
     rule <mode> EXECMODE </mode>
-         <k> #next
-           => #pushCallStack
-           ~> #exceptional? [ OP ] ~> #exec [ OP ] ~> #pc [ OP ]
-           ~> #? #dropCallStack : #popCallStack ~> #exception ?#
-          ...
-         </k>
+         <k> #next => #pushCallStack ~> #exceptional? [ OP ] ~> #? #dropCallStack : #popCallStack ~> #exception ?# ... </k>
          <pc> PCOUNT </pc>
          <program> ... PCOUNT |-> OP ... </program>
       requires EXECMODE in (SetItem(NORMAL) SetItem(VMTESTS))
@@ -383,7 +378,7 @@ module EVM
 
     syntax InternalOp ::= "#exceptional?" "[" OpCode "]"
  // ----------------------------------------------------
-    rule <k> #exceptional? [ OP ] => #invalid? [ OP ] ~> #stackNeeded? [ OP ] ~> #badJumpDest? [ OP ] ... </k>
+    rule <k> #exceptional? [ OP ] => #invalid? [ OP ] ... </k>
 
 
 // -   `#invalid?` checks if it's the designated invalid opcode.
@@ -392,7 +387,7 @@ module EVM
     syntax InternalOp ::= "#invalid?" "[" OpCode "]"
  // ------------------------------------------------
     rule <k> #invalid? [ INVALID(_) ] => #exception ... </k>
-    rule <k> #invalid? [ OP         ] => .          ... </k> requires notBool isInvalidOp(OP)
+    rule <k> #invalid? [ OP         ] => #stackNeeded? [ OP ] ... </k> requires notBool isInvalidOp(OP)
 
 
 // -   `#stackNeeded?` checks that the stack will be not be under/overflown.
@@ -407,7 +402,7 @@ module EVM
    requires size(WS) <Int #stackNeeded(OP)
      orBool size(WS) +Int #stackDelta(OP) >Int 1024
 
-    rule <k> #stackNeeded? [ OP ] => .K ... </k>
+    rule <k> #stackNeeded? [ OP ] => #badJumpDest? [ OP ] ... </k>
          <wordStack> WS </wordStack>
     requires notBool (size(WS) <Int #stackNeeded(OP)
              orBool   size(WS) +Int #stackDelta(OP) >Int 1024)
@@ -458,10 +453,10 @@ module EVM
 
     syntax InternalOp ::= "#badJumpDest?" "[" OpCode "]"
  // ----------------------------------------------------
-    rule <k> #badJumpDest? [ OP    ] => . ... </k> requires notBool isJumpOp(OP)
+    rule <k> #badJumpDest? [ OP    ] => #exec [ OP ] ... </k> requires notBool isJumpOp(OP)
 
-    rule <k> #badJumpDest? [ OP    ] => . ... </k> <wordStack> ListItem(DEST)          WS </wordStack> <program> ... DEST |-> JUMPDEST ... </program> requires isJumpOp(OP)
-    rule <k> #badJumpDest? [ JUMPI ] => . ... </k> <wordStack> ListItem(_) ListItem(0) WS </wordStack>
+    rule <k> #badJumpDest? [ OP    ] => #exec [ OP ]    ... </k> <wordStack> ListItem(DEST)          WS </wordStack> <program> ... DEST |-> JUMPDEST ... </program> requires isJumpOp(OP)
+    rule <k> #badJumpDest? [ JUMPI ] => #exec [ JUMPI ] ... </k> <wordStack> ListItem(_) ListItem(0) WS </wordStack>
 
     rule <k> #badJumpDest? [ JUMP  ] => #exception ... </k> <wordStack> ListItem(DEST)             WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST
     rule <k> #badJumpDest? [ JUMPI ] => #exception ... </k> <wordStack> ListItem(DEST) ListItem(W) WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST andBool W =/=K 0
@@ -478,7 +473,7 @@ module EVM
 
     syntax InternalOp ::= "#exec" "[" OpCode "]"
  // --------------------------------------------
-    rule <k> #exec [ OP ] => #gas [ OP ] ~> OP ... </k> requires isInternalOp(OP) orBool isNullStackOp(OP) orBool isPushOp(OP)
+    rule <k> #exec [ OP ] => #gas [ OP ] ... </k> requires isInternalOp(OP) orBool isNullStackOp(OP) orBool isPushOp(OP)
 
 
 // Here we load the correct number of arguments from the `wordStack` based on the
@@ -527,17 +522,17 @@ module EVM
 //     the memory consumed.
 
 
-    syntax InternalOp ::= "#gas" "[" OpCode "]" | "#deductGas"
- // ----------------------------------------------------------
-    rule <k> #gas [ OP ] => #gasExec(SCHED, OP) ~> #memory(OP, MU) ~> #deductGas ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    syntax InternalOp ::= "#gas" "[" OpCode "]" | "#deductGas" "[" OpCode "]"
+ // -------------------------------------------------------------------------
+    rule <k> #gas [ OP ] => #gasExec(SCHED, OP) ~> #memory(OP, MU) ~> #deductGas [ OP ] ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule <k> GEXEC:Int ~> MU':Int ~> #deductGas => #exception ... </k> requires MU' >=Int pow256
-    rule <k> (GEXEC:Int ~> MU':Int => (Cmem(SCHED, MU') -Int Cmem(SCHED, MU)) +Int GEXEC)  ~> #deductGas ... </k>
+    rule <k> GEXEC:Int ~> MU':Int ~> #deductGas [ OP ] => #exception ... </k> requires MU' >=Int pow256
+    rule <k> (GEXEC:Int ~> MU':Int => (Cmem(SCHED, MU') -Int Cmem(SCHED, MU)) +Int GEXEC)  ~> #deductGas [ OP ] ... </k>
          <memoryUsed> MU => MU' </memoryUsed> <schedule> SCHED </schedule>
       requires MU' <Int pow256
 
-    rule <k> G:Int ~> #deductGas => #exception ... </k> <gas> GAVAIL                  </gas> requires GAVAIL <Int G
-    rule <k> G:Int ~> #deductGas => .          ... </k> <gas> GAVAIL => GAVAIL -Int G </gas> <previousGas> _ => GAVAIL </previousGas> requires GAVAIL >=Int G
+    rule <k> G:Int ~> #deductGas [ OP ] => #exception       ... </k> <gas> GAVAIL                  </gas> requires GAVAIL <Int G
+    rule <k> G:Int ~> #deductGas [ OP ] => OP ~> #pc [ OP ] ... </k> <gas> GAVAIL => GAVAIL -Int G </gas> <previousGas> _ => GAVAIL </previousGas> requires GAVAIL >=Int G
 
     syntax Int ::= Cmem ( Schedule , Int ) [function, memo]
  // -------------------------------------------------------
@@ -555,9 +550,9 @@ module EVM
 
     syntax InternalOp ::= "#pc" "[" OpCode "]"
  // ------------------------------------------
-    rule <k> #pc [ OP         ] => . ... </k> <pc> PCOUNT => PCOUNT +Int 1          </pc> requires notBool (isPushOp(OP) orBool isJumpOp(OP))
-    rule <k> #pc [ PUSH(N, _) ] => . ... </k> <pc> PCOUNT => PCOUNT +Int (1 +Int N) </pc>
-    rule <k> #pc [ OP         ] => . ... </k> requires isJumpOp(OP)
+    rule <k> #pc [ OP         ] => #next ... </k> <pc> PCOUNT => PCOUNT +Int 1          </pc> requires notBool (isPushOp(OP) orBool isJumpOp(OP))
+    rule <k> #pc [ PUSH(N, _) ] => #next ... </k> <pc> PCOUNT => PCOUNT +Int (1 +Int N) </pc>
+    rule <k> #pc [ OP         ] => #next ... </k> requires isJumpOp(OP)
 
     syntax Bool ::= isJumpOp ( OpCode ) [function]
  // ----------------------------------------------
