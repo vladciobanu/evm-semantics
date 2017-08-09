@@ -60,11 +60,12 @@ In the comments next to each cell, we've marked which component of the YellowPap
                         <callValue> 0          </callValue>             // I_v
 
                         // \mu_*
-                        <wordStack>   .WordStack </wordStack>           // \mu_s
-                        <localMem>    .Map       </localMem>            // \mu_m
-                        <pc>          0          </pc>                  // \mu_pc
-                        <gas>         0          </gas>                 // \mu_g
-                        <previousGas> 0          </previousGas>
+                        <wordStack>     .WordStack </wordStack>         // \mu_s
+                        <wordStackSize> 0          </wordStackSize>     // #sizeWordStack(\mu_s)
+                        <localMem>      .Map       </localMem>          // \mu_m
+                        <pc>            0          </pc>                // \mu_pc
+                        <gas>           0          </gas>               // \mu_g
+                        <previousGas>   0          </previousGas>
 
                         <static> false </static>
                       </txExecState>
@@ -209,44 +210,46 @@ The `callStack` cell stores a list of previous VM execution states.
 -   `#dropCallStack` removes the top element of the `callStack`.
 
 ```{.k .uiuck .rvk}
-    syntax State ::= "{" Int "|" Int "|" Map "|" WordStack "|" Int "|" WordStack "|" Int "|" WordStack "|" Map "|" Int "|" Int "|" Int "|" Bool "}"
- // -----------------------------------------------------------------------------------------------------------------------------------------------
+    syntax State ::= "{" Int "|" Int "|" Map "|" WordStack "|" Int "|" WordStack "|" Int "|" WordStack "|" Int "|" Map "|" Int "|" Int "|" Int "|" Bool "}"
+ // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax InternalOp ::= "#pushCallStack"
  // --------------------------------------
     rule <k> #pushCallStack => . ... </k>
-         <callStack>  (.List => ListItem({ ACCT | GAVAIL | PGM | BYTES | CR | CD | CV | WS | LM | MUSED | PCOUNT | DEPTH | STATIC })) ... </callStack>
-         <id>           ACCT   </id>
-         <gas>          GAVAIL </gas>
-         <program>      PGM    </program>
-         <programBytes> BYTES  </programBytes>
-         <caller>       CR     </caller>
-         <callData>     CD     </callData>
-         <callValue>    CV     </callValue>
-         <wordStack>    WS     </wordStack>
-         <localMem>     LM     </localMem>
-         <memoryUsed>   MUSED  </memoryUsed>
-         <pc>           PCOUNT </pc>
-         <callDepth>    DEPTH  </callDepth>
-         <static>       STATIC </static>
+         <callStack>  (.List => ListItem({ ACCT | GAVAIL | PGM | BYTES | CR | CD | CV | WS | WSIZE | LM | MUSED | PCOUNT | DEPTH | STATIC })) ... </callStack>
+         <id>            ACCT   </id>
+         <gas>           GAVAIL </gas>
+         <program>       PGM    </program>
+         <programBytes>  BYTES  </programBytes>
+         <caller>        CR     </caller>
+         <callData>      CD     </callData>
+         <callValue>     CV     </callValue>
+         <wordStack>     WS     </wordStack>
+         <wordStackSize> WSIZE  </wordStackSize>
+         <localMem>      LM     </localMem>
+         <memoryUsed>    MUSED  </memoryUsed>
+         <pc>            PCOUNT </pc>
+         <callDepth>     DEPTH  </callDepth>
+         <static>        STATIC </static>
 
     syntax InternalOp ::= "#popCallStack"
  // -------------------------------------
     rule <k> #popCallStack => . ... </k>
-         <callStack>  (ListItem({ ACCT | GAVAIL | PGM | BYTES | CR | CD | CV | WS | LM | MUSED | PCOUNT | DEPTH | STATIC }) => .List) ... </callStack>
-         <id>           _ => ACCT   </id>
-         <gas>          _ => GAVAIL </gas>
-         <program>      _ => PGM    </program>
-         <programBytes> _ => BYTES  </programBytes>
-         <caller>       _ => CR     </caller>
-         <callData>     _ => CD     </callData>
-         <callValue>    _ => CV     </callValue>
-         <wordStack>    _ => WS     </wordStack>
-         <localMem>     _ => LM     </localMem>
-         <memoryUsed>   _ => MUSED  </memoryUsed>
-         <pc>           _ => PCOUNT </pc>
-         <callDepth>    _ => DEPTH  </callDepth>
-         <static>       _ => STATIC </static>
+         <callStack>  (ListItem({ ACCT | GAVAIL | PGM | BYTES | CR | CD | CV | WS | WSIZE | LM | MUSED | PCOUNT | DEPTH | STATIC }) => .List) ... </callStack>
+         <id>            _ => ACCT   </id>
+         <gas>           _ => GAVAIL </gas>
+         <program>       _ => PGM    </program>
+         <programBytes>  _ => BYTES  </programBytes>
+         <caller>        _ => CR     </caller>
+         <callData>      _ => CD     </callData>
+         <callValue>     _ => CV     </callValue>
+         <wordStack>     _ => WS     </wordStack>
+         <wordStackSize> _ => WSIZE  </wordStackSize>
+         <localMem>      _ => LM     </localMem>
+         <memoryUsed>    _ => MUSED  </memoryUsed>
+         <pc>            _ => PCOUNT </pc>
+         <callDepth>     _ => DEPTH  </callDepth>
+         <static>        _ => STATIC </static>
 
     syntax InternalOp ::= "#dropCallStack"
  // --------------------------------------
@@ -500,14 +503,12 @@ The `#next` operator executes a single step by:
     syntax InternalOp ::= "#stackNeeded?" "[" OpCode "]"
  // ----------------------------------------------------
     rule <k> #stackNeeded? [ OP ] => #exception ... </k>
-         <wordStack> WS </wordStack>
-      requires #sizeWordStack(WS) <Int #stackNeeded(OP)
-        orBool #sizeWordStack(WS) +Int #stackDelta(OP) >Int 1024
+         <wordStackSize> WS </wordStackSize>
+      requires WS <Int #stackNeeded(OP) orBool WS +Int #stackDelta(OP) >Int 1024
 
-    rule <k> #stackNeeded? [ OP ] => .K ... </k>
-         <wordStack> WS </wordStack>
-      requires notBool (#sizeWordStack(WS) <Int #stackNeeded(OP)
-               orBool   #sizeWordStack(WS) +Int #stackDelta(OP) >Int 1024)
+    rule <k> #stackNeeded? [ OP ] => . ... </k>
+         <wordStackSize> WS </wordStackSize>
+      requires notBool (WS <Int #stackNeeded(OP) orBool WS +Int #stackDelta(OP) >Int 1024)
 
     syntax Int ::= #stackNeeded ( OpCode ) [function]
  // -------------------------------------------------
@@ -689,10 +690,10 @@ Some of them require an argument to be interpereted as an address (modulo 160 bi
                         | TernStackOp Int Int Int
                         | QuadStackOp Int Int Int Int
  // -------------------------------------------------
-    rule <k> #exec [ UOP:UnStackOp   => UOP #addr?(UOP, W0)          ] ... </k> <wordStack> W0 : WS                => WS </wordStack>
-    rule <k> #exec [ BOP:BinStackOp  => BOP #addr?(BOP, W0) W1       ] ... </k> <wordStack> W0 : W1 : WS           => WS </wordStack>
-    rule <k> #exec [ TOP:TernStackOp => TOP #addr?(TOP, W0) W1 W2    ] ... </k> <wordStack> W0 : W1 : W2 : WS      => WS </wordStack>
-    rule <k> #exec [ QOP:QuadStackOp => QOP #addr?(QOP, W0) W1 W2 W3 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : WS => WS </wordStack>
+    rule <k> #exec [ UOP:UnStackOp   => UOP #addr?(UOP, W0)          ] ... </k> <wordStack> W0 : WS                => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 1 </wordStackSize>
+    rule <k> #exec [ BOP:BinStackOp  => BOP #addr?(BOP, W0) W1       ] ... </k> <wordStack> W0 : W1 : WS           => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 2 </wordStackSize>
+    rule <k> #exec [ TOP:TernStackOp => TOP #addr?(TOP, W0) W1 W2    ] ... </k> <wordStack> W0 : W1 : W2 : WS      => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 3 </wordStackSize>
+    rule <k> #exec [ QOP:QuadStackOp => QOP #addr?(QOP, W0) W1 W2 W3 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : WS => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 4 </wordStackSize>
 ```
 
 `StackOp` is used for opcodes which require a large portion of the stack.
@@ -709,8 +710,8 @@ The `CallOp` opcodes all interperet their second argument as an address.
     syntax InternalOp ::= CallSixOp Int Int     Int Int Int Int
                         | CallOp    Int Int Int Int Int Int Int
  // -----------------------------------------------------------
-    rule <k> #exec [ CSO:CallSixOp => CSO W0 #addr(W1)    W2 W3 W4 W5 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : W4 : W5 : WS      => WS </wordStack>
-    rule <k> #exec [ CO:CallOp     => CO  W0 #addr(W1) W2 W3 W4 W5 W6 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : W4 : W5 : W6 : WS => WS </wordStack>
+    rule <k> #exec [ CSO:CallSixOp => CSO W0 #addr(W1)    W2 W3 W4 W5 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : W4 : W5 : WS      => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 6 </wordStackSize>
+    rule <k> #exec [ CO:CallOp     => CO  W0 #addr(W1) W2 W3 W4 W5 W6 ] ... </k> <wordStack> W0 : W1 : W2 : W3 : W4 : W5 : W6 : WS => WS </wordStack> <wordStackSize> SIZE => SIZE -Int 7 </wordStackSize>
 ```
 
 ### Helpers
@@ -919,8 +920,8 @@ These are just used by the other operators for shuffling local execution state a
 ```{.k .uiuck .rvk}
     syntax InternalOp ::= "#push" | "#setStack" WordStack
  // -----------------------------------------------------
-    rule <k> W0:Int ~> #push => . ... </k> <wordStack> WS => W0 : WS </wordStack>
-    rule <k> #setStack WS    => . ... </k> <wordStack> _  => WS      </wordStack>
+    rule <k> W0:Int ~> #push => . ... </k> <wordStack> WS => W0 : WS </wordStack> <wordStackSize> SIZE => SIZE +Int 1        </wordStackSize>
+    rule <k> #setStack WS    => . ... </k> <wordStack> _  => WS      </wordStack> <wordStackSize> _    => #sizeWordStack(WS) </wordStackSize>
 ```
 
 -   `#newAccount_` allows declaring a new empty account with the given address (and assumes the rounding to 160 bits has already occured).
@@ -1027,8 +1028,8 @@ Some operators don't calculate anything, they just push the stack around a bit.
 
     syntax StackOp ::= DUP ( Int ) | SWAP ( Int )
  // ---------------------------------------------
-    rule <k> DUP(N)  WS:WordStack => #setStack ((WS [ N -Int 1 ]) : WS)                      ... </k>
-    rule <k> SWAP(N) (W0 : WS)    => #setStack ((WS [ N -Int 1 ]) : (WS [ N -Int 1 := W0 ])) ... </k>
+    rule <k> DUP(N)  WS::WordStack => #setStack ((WS [ N -Int 1 ]) : WS)                      ... </k>
+    rule <k> SWAP(N) (W0 : WS)     => #setStack ((WS [ N -Int 1 ]) : (WS [ N -Int 1 := W0 ])) ... </k>
 
     syntax PushOp ::= PUSH ( Int , Int )
  // ------------------------------------
@@ -1265,6 +1266,7 @@ These operators query about the current return data buffer.
     rule <k> LOG(N) MEMSTART MEMWIDTH => . ... </k>
          <id> ACCT </id>
          <wordStack> WS => #drop(N, WS) </wordStack>
+         <wordStackSize> SIZE => SIZE -Int N </wordStackSize>
          <localMem> LM </localMem>
          <log> ... (.List => ListItem({ ACCT | #take(N, WS) | #range(LM, MEMSTART, MEMWIDTH) })) </log>
       requires #sizeWordStack(WS) >=Int N
