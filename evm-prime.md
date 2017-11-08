@@ -276,18 +276,18 @@ TODO (high): Explain what each different word type here means and add appropriat
  // ----------------------------------------------------
     rule #type(V , cctx(V |-> taddr(T , _) ENV , _)) => T
 
-    rule #type(I:Int, CTX) => intword(#byteWidth(I))
-    rule #type(tt, CTX) => bool
-    rule #type(ff, CTX) => bool
+    rule #type(I:Int,   CTX) => intword(#byteWidth(I))
+    rule #type(tt,      CTX) => bool
+    rule #type(ff,      CTX) => bool
     rule #type(B1 | B2, CTX) => bool requires #type(B1, CTX) ==K bool andBool #type(B2, CTX) ==K bool
     rule #type(B1 & B2, CTX) => bool requires #type(B1, CTX) ==K bool andBool #type(B2, CTX) ==K bool
 
-    rule #type(A1 == A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
+    rule #type(A1 == A2,  CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
     rule #type(A1 =/= A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
-    rule #type(A1 < A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
-    rule #type(A1 <= A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
-    rule #type(A1 > A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
-    rule #type(A1 >= A2, CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
+    rule #type(A1 < A2,   CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
+    rule #type(A1 <= A2,  CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
+    rule #type(A1 > A2,   CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
+    rule #type(A1 >= A2,  CTX) => bool requires #type(A1, CTX) ==K #type(A2, CTX)
 ```
 
 Variables: Declaration, Lookup, and Assignment
@@ -309,14 +309,14 @@ TODO (high): Add width calculations for remaining types.
 ```{.k .uiuck .rvk}
     syntax Int ::= #width ( ABIType ) [function]
  // --------------------------------------------
-    rule #width( uintword ( N ) ) => N
+    rule #width( uintword   ( N ) )     => N
+    rule #width(  intword   ( N ) )     => N
+    rule #width( ufixedword ( N , M ) ) => N
+    rule #width(  fixedword ( N , M ) ) => N
+
     rule #width( T [ N ] ) => #width(T) *Int N
 
-    rule #width( intword ( N ) ) => N
-    rule #width( ufixedword ( N , M ) ) => N
-    rule #width( fixedword ( N , M ) ) => N
-
-    rule #width( bool ) => 1 // bools have 1 byte
+    rule #width( bool )    => 1
     rule #width( address ) => 20
 
     rule #width( bytes ( N ) ) => N
