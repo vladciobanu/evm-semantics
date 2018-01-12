@@ -358,7 +358,7 @@ TODO (mid): add type check.
 ```{.k .uiuck .rvk}
     syntax PrimeOp ::= Id ":=" ExpOp
  // --------------------------------
-    rule #resolvePrimeOp( CTX , V := E ) => #resolvePrimeOps(CTX , E ; mstore(V) ; .OpCodes)
+    rule #resolvePrimeOp(VS, V := E) => #resolvePrimeOps(VS, E ; mstore(V) ; .OpCodes) requires #type(V, VS) ==K #type(E, VS)
 ```
 
 ### Example
