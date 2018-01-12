@@ -314,6 +314,9 @@ TODO (high): Add width calculations for remaining types.
     rule #width( ufixedword ( N , M ) ) => N
     rule #width(  fixedword ( N , M ) ) => N
 
+    rule #env( ( ( V : _ ) ; VS ) , V ) => #envWidth(VS)
+    rule #env( ( ( X : _ ) ; VS ) , V ) => #env(VS, V) requires V =/=K X
+
     rule #width( T [ N ] ) => #width(T) *Int N
 
     rule #width( bool )    => 1
