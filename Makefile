@@ -280,6 +280,7 @@ tests/ethereum-tests/BlockchainTests/%.test: tests/ethereum-tests/BlockchainTest
 # InteractiveTests
 
 interactive_tests:=$(wildcard tests/interactive/*.json) \
+                   $(wildcard tests/interactive/*/*.json) \
                    $(wildcard tests/interactive/*/*.evm)
 
 test-interactive: $(interactive_tests:=.test)
