@@ -1,0 +1,27 @@
+load "network" : "Byzantium"
+
+load "exec" : { "gas" : 1000000000000
+              , "code" : INVALID ; .OpCodes
+              }
+start
+exception
+status EVMC_INVALID_INSTRUCTION
+clear
+
+load "exec" : { "gas" : 1000000000000
+              , "code" : PUSH(2, 0) ; PUSH(2, 8) ; JUMPI ; INVALID ; JUMPDEST ; STOP ; .OpCodes
+              }
+start
+exception
+status EVMC_INVALID_INSTRUCTION
+clear
+
+load "exec" : { "gas" : 100000000000
+              , "code" : PUSH(32, #symbolicWord) ; PUSH(2, 40) ; JUMPI ; INVALID ; JUMPDEST ; STOP ; .OpCodes
+              }
+start
+exception
+status EVMC_INVALID_INSTRUCTION
+clear
+
+.EthereumSimulation
