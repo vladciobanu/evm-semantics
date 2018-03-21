@@ -294,12 +294,16 @@ Control Flow
 ### Exception Based
 
 -   `#end` indicates (non-exceptional) end of execution.
+-   `#revert` indicates a call to the `REVERT` opcode.
 -   `#exception` indicates exceptions (consuming opcodes until a catch).
+-   `#exception_` allows for typed exceptions.
 
 ```k
     syntax KItem     ::= Exception
-    syntax Exception ::= "#exception" | "#end" | "#revert"
- // ------------------------------------------------------
+    syntax Exception ::= "#exception"
+                       | "#exception" ExceptionType
+                       | "#end" | "#revert"
+ // ---------------------------------------
     rule <k> EX:Exception ~> (_:Int    => .) ... </k>
     rule <k> EX:Exception ~> (_:OpCode => .) ... </k>
 ```
@@ -311,10 +315,11 @@ Control Flow
 ```k
     syntax KItem ::= "#?" K ":" K "?#"
  // ----------------------------------
-    rule <k>               #? B1 : _  ?# => B1               ... </k>
-    rule <k> #exception ~> #? _  : B2 ?# => B2 ~> #exception ... </k>
-    rule <k> #revert    ~> #? B1 : _  ?# => B1 ~> #revert    ... </k>
-    rule <k> #end       ~> #? B1 : _  ?# => B1 ~> #end       ... </k>
+    rule <k>                 #? B1 : _  ?# => B1                 ... </k>
+    rule <k> #exception   ~> #? _  : B2 ?# => B2 ~> #exception   ... </k>
+    rule <k> #exception E ~> #? _  : B2 ?# => B2 ~> #exception E ... </k>
+    rule <k> #revert      ~> #? B1 : _  ?# => B1 ~> #revert      ... </k>
+    rule <k> #end         ~> #? B1 : _  ?# => B1 ~> #end         ... </k>
 ```
 
 OpCode Execution
@@ -407,22 +412,28 @@ The `#next` operator executes a single step by:
          </k>
 ```
 
--   `#invalid?` checks if it's the designated invalid opcode.
+-   `#invalid?` checks if it's the designated invalid opcode, and throws `#exception ASSERT_FAILURE` if it is.
 
 ```k
+    syntax ExceptionType ::= "ASSERT_FAILURE"
+ // -----------------------------------------
+
     syntax InternalOp ::= "#invalid?" "[" OpCode "]"
  // ------------------------------------------------
-    rule <k> #invalid? [ INVALID ] => #exception ... </k>
-    rule <k> #invalid? [ OP      ] => .          ... </k> requires notBool isInvalidOp(OP)
+    rule <k> #invalid? [ OP      ] => .                         ... </k> requires notBool isInvalidOp(OP)
+    rule <k> #invalid? [ INVALID ] => #exception ASSERT_FAILURE ... </k>
 ```
 
 -   `#stackNeeded?` checks that the stack will be not be under/overflown.
 -   `#stackNeeded`, `#stackAdded`, and `#stackDelta` are helpers for deciding `#stackNeeded?`.
 
 ```k
+    syntax ExceptionType ::= "STACK_OUT_OF_BOUNDS"
+ // ----------------------------------------------
+
     syntax InternalOp ::= "#stackNeeded?" "[" OpCode "]"
  // ----------------------------------------------------
-    rule <k> #stackNeeded? [ OP ] => #exception ... </k>
+    rule <k> #stackNeeded? [ OP ] => #exception STACK_OUT_OF_BOUNDS ... </k>
          <wordStack> WS </wordStack>
       requires #sizeWordStack(WS) <Int #stackNeeded(OP)
         orBool #sizeWordStack(WS) +Int #stackDelta(OP) >Int 1024
@@ -477,17 +488,20 @@ The `#next` operator executes a single step by:
 -   `#badJumpDest?` determines if the opcode will result in a bad jump destination.
 
 ```k
+    syntax ExceptionType ::= "BAD_JUMP_DEST"
+ // ----------------------------------------
+
     syntax InternalOp ::= "#badJumpDest?" "[" OpCode "]"
  // ----------------------------------------------------
     rule <k> #badJumpDest? [ OP    ] => . ... </k> requires notBool isJumpOp(OP)
     rule <k> #badJumpDest? [ OP    ] => . ... </k> <wordStack> DEST  : WS </wordStack> <program> ... DEST |-> JUMPDEST ... </program> requires isJumpOp(OP)
     rule <k> #badJumpDest? [ JUMPI ] => . ... </k> <wordStack> _ : I : WS </wordStack> requires I ==Int 0
 
-    rule <k> #badJumpDest? [ JUMP  ] => #exception ... </k> <wordStack> DEST :     WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST
-    rule <k> #badJumpDest? [ JUMPI ] => #exception ... </k> <wordStack> DEST : W : WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST andBool W =/=K 0
+    rule <k> #badJumpDest? [ JUMP  ] => #exception BAD_JUMP_DEST ... </k> <wordStack> DEST :     WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST
+    rule <k> #badJumpDest? [ JUMPI ] => #exception BAD_JUMP_DEST ... </k> <wordStack> DEST : W : WS </wordStack> <program> ... DEST |-> OP ... </program> requires OP =/=K JUMPDEST andBool W =/=K 0
 
-    rule <k> #badJumpDest? [ JUMP  ] => #exception ... </k> <wordStack> DEST :     WS </wordStack> <program> PGM </program> requires notBool (DEST in_keys(PGM))
-    rule <k> #badJumpDest? [ JUMPI ] => #exception ... </k> <wordStack> DEST : W : WS </wordStack> <program> PGM </program> requires (notBool (DEST in_keys(PGM))) andBool W =/=K 0
+    rule <k> #badJumpDest? [ JUMP  ] => #exception BAD_JUMP_DEST ... </k> <wordStack> DEST :     WS </wordStack> <program> PGM </program> requires notBool (DEST in_keys(PGM))
+    rule <k> #badJumpDest? [ JUMPI ] => #exception BAD_JUMP_DEST ... </k> <wordStack> DEST : W : WS </wordStack> <program> PGM </program> requires (notBool (DEST in_keys(PGM))) andBool W =/=K 0
 ```
 
 -   `#static?` determines if the opcode should throw an exception due to the static flag.
@@ -692,17 +706,20 @@ The `CallOp` opcodes all interperet their second argument as an address.
     rule #code?(EXTCODECOPY)  => true
     rule #code?(OP)           => false requires (OP =/=K EXTCODESIZE) andBool (OP =/=K EXTCODECOPY)
 
+    syntax ExceptionType ::= "OUT_OF_MEMORY" | "OUT_OF_GAS"
+ // -------------------------------------------------------
+
     syntax InternalOp ::= "#gas" "[" OpCode "]" | "#deductGas" | "#deductMemory"
  // ----------------------------------------------------------------------------
     rule <k> #gas [ OP ] => #memory(OP, MU) ~> #deductMemory ~> #gasExec(SCHED, OP) ~> #deductGas ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule <k> MU':Int ~> #deductMemory => #exception ... </k> requires MU' >=Int pow256
+    rule <k> MU':Int ~> #deductMemory => #exception OUT_OF_MEMORY ... </k> requires MU' >=Int pow256
     rule <k> MU':Int ~> #deductMemory => (Cmem(SCHED, MU') -Int Cmem(SCHED, MU)) ~> #deductGas ... </k>
          <memoryUsed> MU => MU' </memoryUsed> <schedule> SCHED </schedule>
       requires MU' <Int pow256
 
-    rule <k> G:Int ~> #deductGas => #exception ... </k> <gas> GAVAIL                  </gas> requires GAVAIL <Int G
-    rule <k> G:Int ~> #deductGas => .          ... </k> <gas> GAVAIL => GAVAIL -Int G </gas> <previousGas> _ => GAVAIL </previousGas> requires GAVAIL >=Int G
+    rule <k> G:Int ~> #deductGas => #exception OUT_OF_GAS ... </k> <gas> GAVAIL                  </gas> requires GAVAIL <Int G
+    rule <k> G:Int ~> #deductGas => .                     ... </k> <gas> GAVAIL => GAVAIL -Int G </gas> <previousGas> _ => GAVAIL </previousGas> requires GAVAIL >=Int G
 
     syntax Int ::= Cmem ( Schedule , Int ) [function, memo]
  // -------------------------------------------------------

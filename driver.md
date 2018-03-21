@@ -239,11 +239,15 @@ To do so, we'll extend sort `JSON` with some EVM specific syntax, and provide a 
     syntax Mode ::= "SUCCESS"
  // -------------------------
 
-    syntax EthereumCommand ::= "exception" | "failure" String | "success"
- // ---------------------------------------------------------------------
-    rule <k> EX:Exception ~> exception => . ... </k>
-    rule <k> success => . ... </k> <exit-code> _ => 0 </exit-code> <mode> _ => SUCCESS </mode>
-    rule failure _ => .
+    syntax EthereumCommand ::= "exception" | "exception" ExceptionType
+ // ------------------------------------------------------------------
+    rule <k> _:Exception  ~> exception   => . ... </k>
+    rule <k> #exception E ~> exception E => . ... </k>
+
+    syntax EthereumCommand ::= "failure" String | "success"
+ // -------------------------------------------------------
+    rule <k> success   => . ... </k> <exit-code> _ => 0 </exit-code> <mode> _ => SUCCESS </mode>
+    rule <k> failure _ => . ... </k>
 ```
 
 ### Running Tests
