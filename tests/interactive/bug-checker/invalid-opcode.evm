@@ -14,4 +14,9 @@ start
 exception EVM_INVALID_INSTRUCTION
 clear
 
+load "exec" : { "gas" : 100000000000
+              , "code" : PUSH(32, #symbolicWord) ; PUSH(2, 40) ; JUMPI ; INVALID ; JUMPDEST ; STOP ; .OpCodes
+              }
+start
+
 .EthereumSimulation
