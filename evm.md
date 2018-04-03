@@ -1436,30 +1436,25 @@ The various `CALL*` (and other inter-contract control flow) operations will be d
          <wordStack>  _ => .WordStack </wordStack>
          <localMem>   _ => .Map       </localMem>
 
+    syntax KItem ::= "#endCall"
+ // ---------------------------
+    rule <statusCode> _:ExceptionalStatusCode </statusCode> <k> #halt ~> #endCall => #popCallStack ~> #popWorldState                    ... </k>
+    rule <statusCode> EVMC_REVERT             </statusCode> <k> #halt ~> #endCall => #popCallStack ~> #popWorldState  ~> #refund GAVAIL ... </k> <gas> GAVAIL </gas>
+    rule <statusCode> EVMC_SUCCESS            </statusCode> <k> #halt ~> #endCall => #popCallStack ~> #dropWorldState ~> #refund GAVAIL ... </k> <gas> GAVAIL </gas>
+
     syntax KItem ::= "#return" Int Int
  // ----------------------------------
     rule <statusCode> _:ExceptionalStatusCode </statusCode>
-         <k> #halt ~> #return _ _ => #popCallStack ~> #popWorldState
-          ~> 0 ~> #push
-         ...
-         </k>
+         <k> #return _ _ => 0 ~> #push ... </k>
          <output> _ => .WordStack </output>
 
     rule <statusCode> EVMC_REVERT </statusCode>
-         <k> #halt ~> #return RETSTART RETWIDTH => #popCallStack ~> #popWorldState ~> #refund GAVAIL
-          ~> 0 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT
-         ...
-         </k>
+         <k> #return RETSTART RETWIDTH => 0 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT ... </k>
          <output> OUT </output>
-         <gas> GAVAIL </gas>
 
     rule <statusCode> EVMC_SUCCESS </statusCode>
-         <k> #halt ~> #return RETSTART RETWIDTH => #popCallStack ~> #dropWorldState ~> #refund GAVAIL
-          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT
-         ...
-         </k>
+         <k> #return RETSTART RETWIDTH => 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT ... </k>
          <output> OUT </output>
-         <gas> GAVAIL </gas>
 
     syntax InternalOp ::= "#refund" Exp [strict]
                         | "#setLocalMem" Int Int WordStack
@@ -1483,6 +1478,7 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
     rule <k> CALL GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #checkCall ACCTFROM VALUE
           ~> #call ACCTFROM ACCTTO ACCTTO VALUE VALUE #range(LM, ARGSTART, ARGWIDTH) false
+          ~> #endCall
           ~> #return RETSTART RETWIDTH
          ...
          </k>
@@ -1495,6 +1491,7 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
     rule <k> CALLCODE GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #checkCall ACCTFROM VALUE
           ~> #call ACCTFROM ACCTFROM ACCTTO VALUE VALUE #range(LM, ARGSTART, ARGWIDTH) false
+          ~> #endCall
           ~> #return RETSTART RETWIDTH
          ...
          </k>
@@ -1507,6 +1504,7 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
     rule <k> DELEGATECALL GCAP ACCTTO ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #checkCall ACCTFROM 0
           ~> #call ACCTAPPFROM ACCTFROM ACCTTO 0 VALUE #range(LM, ARGSTART, ARGWIDTH) false
+          ~> #endCall
           ~> #return RETSTART RETWIDTH
          ...
          </k>
@@ -1521,6 +1519,7 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
     rule <k> STATICCALL GCAP ACCTTO ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #checkCall ACCTFROM 0
           ~> #call ACCTFROM ACCTTO ACCTTO 0 0 #range(LM, ARGSTART, ARGWIDTH) true
+          ~> #endCall
           ~> #return RETSTART RETWIDTH
          ...
          </k>
