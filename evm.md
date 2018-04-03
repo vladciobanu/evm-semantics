@@ -1407,25 +1407,23 @@ The various `CALL*` (and other inter-contract control flow) operations will be d
     syntax KItem ::= "#return" Int Int
  // ----------------------------------
     rule <statusCode> _:ExceptionalStatusCode </statusCode>
-         <k> #halt ~> #return _ _
-          => #popCallStack ~> #popWorldState ~> 0 ~> #push
+         <k> #halt ~> #return _ _ => #popCallStack ~> #popWorldState
+          ~> 0 ~> #push
          ...
          </k>
          <output> _ => .WordStack </output>
 
     rule <statusCode> EVMC_REVERT </statusCode>
-         <k> #halt ~> #return RETSTART RETWIDTH
-          => #popCallStack ~> #popWorldState
-          ~> 0 ~> #push ~> #refund GAVAIL ~> #setLocalMem RETSTART RETWIDTH OUT
+         <k> #halt ~> #return RETSTART RETWIDTH => #popCallStack ~> #popWorldState ~> #refund GAVAIL
+          ~> 0 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT
          ...
          </k>
          <output> OUT </output>
          <gas> GAVAIL </gas>
 
     rule <statusCode> EVMC_SUCCESS </statusCode>
-         <k> #halt ~> #return RETSTART RETWIDTH
-          => #popCallStack ~> #dropWorldState
-          ~> 1 ~> #push ~> #refund GAVAIL ~> #setLocalMem RETSTART RETWIDTH OUT
+         <k> #halt ~> #return RETSTART RETWIDTH => #popCallStack ~> #dropWorldState ~> #refund GAVAIL
+          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH OUT
          ...
          </k>
          <output> OUT </output>
