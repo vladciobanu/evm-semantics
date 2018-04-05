@@ -1542,8 +1542,8 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
 -   `#codeDeposit_` checks the result of initialization code and whether the code deposit can be paid, indicating an error if not.
 
 ```k
-    syntax InternalOp ::= "#create" Int Int Int Int WordStack
-                        | "#mkCreate" Int Int WordStack Int Int
+    syntax InternalOp ::= "#create"   Int Int Int Int WordStack
+                        | "#mkCreate" Int Int Int Int WordStack
                         | "#incrementNonce" Int
  // -------------------------------------------
     rule <k> #create ACCTFROM ACCTTO GAVAIL VALUE INITCODE
@@ -1551,11 +1551,11 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
           ~> #pushCallStack ~> #pushWorldState
           ~> #newAccount ACCTTO
           ~> #transferFunds ACCTFROM ACCTTO VALUE
-          ~> #mkCreate ACCTFROM ACCTTO INITCODE GAVAIL VALUE
+          ~> #mkCreate ACCTFROM ACCTTO GAVAIL VALUE INITCODE
          ...
          </k>
 
-    rule <k> #mkCreate ACCTFROM ACCTTO INITCODE GAVAIL VALUE
+    rule <k> #mkCreate ACCTFROM ACCTTO GAVAIL VALUE INITCODE
           => #initVM ~> #execute
          ...
          </k>
