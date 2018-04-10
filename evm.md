@@ -1585,17 +1585,16 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
 
     rule <statusCode> _:ExceptionalStatusCode </statusCode>
          <k> #halt ~> #finishCodeDeposit ACCT _
-          => #popCallStack ~> #dropWorldState
-          ~> #refund GAVAIL ~> ACCT ~> #push
+          => #popCallStack
+          ~> #if SCHED ==K FRONTIER
+                #then #dropWorldState ~> #refund GAVAIL ~> ACCT
+                #else #popWorldState  ~>                   0
+             #fi
+          ~> #push
          ...
          </k>
          <gas> GAVAIL </gas>
-         <schedule> FRONTIER </schedule>
-
-    rule <statusCode> _:ExceptionalStatusCode </statusCode>
-         <k> #halt ~> #finishCodeDeposit _ _ => #popCallStack ~> #popWorldState ~> 0 ~> #push ... </k>
          <schedule> SCHED </schedule>
-      requires SCHED =/=K FRONTIER
 ```
 
 `CREATE` will attempt to `#create` the account using the initialization code and cleans up the result with `#codeDeposit`.
