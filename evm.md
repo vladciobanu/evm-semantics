@@ -1575,20 +1575,24 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
            ...
          </account>
 
-    syntax KItem ::= "#codeDeposit" Int
+    syntax KItem ::= "#endCreate"
+                   | "#codeDeposit" Int
                    | "#mkCodeDeposit" Int
                    | "#finishCodeDeposit" Int WordStack
  // ---------------------------------------------------
+    rule <statusCode> _:ExceptionalStatusCode </statusCode> <k> #halt ~> #endCreate => #popCallStack ~> #popWorldState                   ... </k>
+    rule <statusCode> EVMC_REVERT             </statusCode> <k> #halt ~> #endCreate => #popCallStack ~> #popWorldState ~> #refund GAVAIL ... </k> <gas> GAVAIL </gas>
+    rule <statusCode> EVMC_SUCCESS            </statusCode> <k> #halt ~> #endCreate => .                                                 ... </k>
+
     rule <statusCode> _:ExceptionalStatusCode </statusCode>
-         <k> #halt ~> #codeDeposit _ => #popCallStack ~> #popWorldState ~> 0 ~> #push ... </k>
+         <k> #codeDeposit _ => 0 ~> #push ... </k>
          <output> _ => .WordStack </output>
 
     rule <statusCode> EVMC_REVERT </statusCode>
-         <k> #halt ~> #codeDeposit _ => #popCallStack ~> #popWorldState ~> #refund GAVAIL ~> 0 ~> #push ... </k>
-         <gas> GAVAIL </gas>
+         <k> #codeDeposit _ => 0 ~> #push ... </k>
 
     rule <statusCode> EVMC_SUCCESS </statusCode>
-         <k> #halt ~> #codeDeposit ACCT => #mkCodeDeposit ACCT ... </k>
+         <k> #codeDeposit ACCT => #mkCodeDeposit ACCT ... </k>
 
     rule <k> #mkCodeDeposit ACCT
           => Gcodedeposit < SCHED > *Int #sizeWordStack(OUT) ~> #deductGas
@@ -1638,6 +1642,7 @@ For each `CALL*` operation, we make a corresponding call to `#call` and a state-
     rule <k> CREATE VALUE MEMSTART MEMWIDTH
           => #checkCall ACCT VALUE
           ~> #create ACCT #newAddr(ACCT, NONCE) VALUE #range(LM, MEMSTART, MEMWIDTH)
+          ~> #endCreate
           ~> #codeDeposit #newAddr(ACCT, NONCE)
          ...
          </k>
