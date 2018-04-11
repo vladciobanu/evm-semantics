@@ -150,7 +150,7 @@ To do so, we'll extend sort `JSON` with some EVM specific syntax, and provide a 
           => #loadAccount ACCTTO
           ~> #lookupCode  ACCTTO
           ~> #call ACCTFROM ACCTTO ACCTTO VALUE VALUE DATA false
-          ~> #finishTx ~> #finalizeTx(false) ~> startTx
+          ~> #endCall ~> #finalizeTx(false) ~> startTx
          ...
          </k>
          <schedule> SCHED </schedule>
@@ -192,18 +192,6 @@ To do so, we'll extend sort `JSON` with some EVM specific syntax, and provide a 
            <to>    .Account </to>
            ...
          </message>
-
-    rule <statusCode> EVMC_SUCCESS </statusCode>
-         <k> #halt ~> #finishTx => #popCallStack ~> #dropWorldState ~> #refund GAVAIL ... </k>
-         <id> ACCT </id>
-         <gas> GAVAIL </gas>
-         <txPending> ListItem(TXID:Int) ... </txPending>
-         <message>
-           <msgID> TXID </msgID>
-           <to>    TT   </to>
-           ...
-         </message>
-      requires TT =/=K .Account
 ```
 
 -   `#finalizeBlock` is used to signal that block finalization procedures should take place (after transactions have executed).
