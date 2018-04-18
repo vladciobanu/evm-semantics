@@ -1357,8 +1357,11 @@ The various `CALL*` (and other inter-contract control flow) operations will be d
          ...
          </k>
          <schedule> SCHED </schedule>
-         <acctID> ACCTCODE </acctID>
-         <code> CODE </code>
+         <account>
+           <acctID> ACCTCODE </acctID>
+           <code> CODE </code>
+           ...
+         </account>
       requires notBool ACCTCODE in #precompiledAccounts(SCHED)
 
     rule <k> #call ACCTFROM ACCTTO ACCTCODE VALUE APPVALUE ARGS STATIC
