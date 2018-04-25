@@ -328,7 +328,10 @@ The `#next` operator executes a single step by:
 ```k
     rule <mode> EXECMODE </mode>
          <k> #next
-          => #pushCallStack ~> #exceptional? [ OP ]
+          => #pushCallStack ~> #invalid?     [ OP ]
+                            ~> #stackNeeded? [ OP ]
+                            ~> #badJumpDest? [ OP ]
+                            ~> #static?      [ OP ]
                             ~> #load         [ OP ]
                             ~> #exec         [ OP ]
                             ~> #pc           [ OP ]
@@ -340,21 +343,7 @@ The `#next` operator executes a single step by:
       requires EXECMODE in (SetItem(NORMAL) SetItem(VMTESTS))
 ```
 
-### Exceptional OpCodes
-
--   `#exceptional?` checks if the operator is invalid and will not cause `wordStack` size issues (this implements the function `Z` in the YellowPaper, section 9.4.2).
-
-```k
-    syntax InternalOp ::= "#exceptional?" "[" OpCode "]"
- // ----------------------------------------------------
-    rule <k> #exceptional? [ OP ]
-          => #invalid?     [ OP ]
-          ~> #stackNeeded? [ OP ]
-          ~> #badJumpDest? [ OP ]
-          ~> #static?      [ OP ]
-         ...
-         </k>
-```
+### Exceptional Checks
 
 -   `#invalid?` checks if it's the designated invalid opcode or some undefined opcode.
 
