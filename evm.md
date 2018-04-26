@@ -692,23 +692,14 @@ Lists of opcodes form programs.
 ### Converting to/from `Map` Representation
 
 ```k
-    syntax Map ::= #asMapOpCodes ( OpCodes )             [function]
-                 | #asMapOpCodes ( Int , OpCodes , Map ) [function, klabel(#asMapOpCodesAux)]
- // -----------------------------------------------------------------------------------------
-    rule #asMapOpCodes( OPS::OpCodes ) => #asMapOpCodes(0, OPS, .Map)
+    syntax Map ::= #asMapOpCodes    ( OpCodes )             [function]
+                 | #asMapOpCodesAux ( OpCodes , Int , Map ) [function]
+ // ------------------------------------------------------------------
+    rule #asMapOpCodes( OPS::OpCodes ) => #asMapOpCodesAux(OPS, 0, .Map)
 
-    rule #asMapOpCodes( N , .OpCodes         , MAP ) => MAP
-    rule #asMapOpCodes( N , OP:OpCode  ; OCS , MAP ) => #asMapOpCodes(N +Int 1, OCS, MAP (N |-> OP)) requires notBool isPushOp(OP)
-    rule #asMapOpCodes( N , PUSH(M, W) ; OCS , MAP ) => #asMapOpCodes(N +Int 1 +Int M, OCS, MAP (N |-> PUSH(M, W)))
-
-    syntax OpCodes ::= #asOpCodes ( Map )                 [function]
-                     | #asOpCodes ( Int , Map , OpCodes ) [function, klabel(#asOpCodesAux)]
- // ---------------------------------------------------------------------------------------
-    rule #asOpCodes(M) => #asOpCodes(0, M, .OpCodes)
-
-    rule #asOpCodes(N, .Map,               OPS) => OPS
-    rule #asOpCodes(N, N |-> OP         M, OPS) => #asOpCodes(N +Int 1,        M, OP         ; OPS) requires notBool isPushOp(OP)
-    rule #asOpCodes(N, N |-> PUSH(S, W) M, OPS) => #asOpCodes(N +Int 1 +Int S, M, PUSH(S, W) ; OPS)
+    rule #asMapOpCodesAux( .OpCodes         , N , MAP ) => MAP
+    rule #asMapOpCodesAux( OP:OpCode  ; OCS , N , MAP ) => #asMapOpCodesAux( OCS , N +Int 1        , MAP (N |-> OP)         ) requires notBool isPushOp(OP)
+    rule #asMapOpCodesAux( PUSH(M, W) ; OCS , N , MAP ) => #asMapOpCodesAux( OCS , N +Int 1 +Int M , MAP (N |-> PUSH(M, W)) )
 ```
 
 EVM OpCodes
