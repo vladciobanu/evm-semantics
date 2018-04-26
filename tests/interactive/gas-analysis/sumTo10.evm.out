@@ -37,39 +37,13 @@
       </touchedAccounts>
       <callState>
         <program>
-          0 |-> PUSH ( 1 , 0 )
-          2 |-> PUSH ( 1 , 0 )
-          4 |-> MSTORE
-          5 |-> PUSH ( 1 , 10 )
-          7 |-> PUSH ( 1 , 32 )
-          9 |-> MSTORE
-          10 |-> JUMPDEST
-          11 |-> PUSH ( 1 , 32 )
-          13 |-> MLOAD
-          14 |-> ISZERO
-          15 |-> PUSH ( 1 , 39 )
-          17 |-> JUMPI
-          18 |-> PUSH ( 1 , 32 )
-          20 |-> MLOAD
-          21 |-> DUP ( 1 )
-          22 |-> PUSH ( 1 , 0 )
-          24 |-> MLOAD
-          25 |-> ADD
-          26 |-> PUSH ( 1 , 0 )
-          28 |-> MSTORE
-          29 |-> PUSH ( 1 , 1 )
-          31 |-> SWAP ( 1 )
-          32 |-> SUB
-          33 |-> PUSH ( 1 , 32 )
-          35 |-> MSTORE
-          36 |-> PUSH ( 1 , 10 )
-          38 |-> JUMP
-          39 |-> JUMPDEST
-          40 |-> PUSH ( 1 , 0 )
-          42 |-> MLOAD
-          43 |-> PUSH ( 1 , 0 )
-          45 |-> SSTORE
+          0 |-> PUSH ( 1 , 0 ) ; PUSH ( 1 , 0 ) ; MSTORE ; PUSH ( 1 , 10 ) ; PUSH ( 1 , 32 ) ; MSTORE ; .OpCodes
+          10 |-> JUMPDEST ; PUSH ( 1 , 32 ) ; MLOAD ; ISZERO ; PUSH ( 1 , 39 ) ; JUMPI ; PUSH ( 1 , 32 ) ; MLOAD ; DUP ( 1 ) ; PUSH ( 1 , 0 ) ; MLOAD ; ADD ; PUSH ( 1 , 0 ) ; MSTORE ; PUSH ( 1 , 1 ) ; SWAP ( 1 ) ; SUB ; PUSH ( 1 , 32 ) ; MSTORE ; PUSH ( 1 , 10 ) ; JUMP ; .OpCodes
+          39 |-> JUMPDEST ; PUSH ( 1 , 0 ) ; MLOAD ; PUSH ( 1 , 0 ) ; SSTORE ; .OpCodes
         </program>
+        <programBlock>
+          .OpCodes
+        </programBlock>
         <programBytes>
           96 : 0 : 96 : 0 : 82 : 96 : 10 : 96 : 32 : 82 : 91 : 96 : 32 : 81 : 21 : 96 : 39 : 87 : 96 : 32 : 81 : 128 : 96 : 0 : 81 : 1 : 96 : 0 : 82 : 96 : 1 : 144 : 3 : 96 : 32 : 82 : 96 : 10 : 86 : 91 : 96 : 0 : 81 : 96 : 0 : 85 : .WordStack
         </programBytes>
