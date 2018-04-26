@@ -353,6 +353,7 @@ State Manipulation
          <callDepth>       _ => 0          </callDepth>
          <callStack>       _ => .List      </callStack>
          <program>         _ => .Map       </program>
+         <programBlock>    _ => .OpCodes   </programBlock>
          <programBytes>    _ => .WordStack </programBytes>
          <id>              _ => 0          </id>
          <caller>          _ => 0          </caller>

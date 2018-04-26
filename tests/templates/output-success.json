@@ -35,6 +35,9 @@
         <program>
           .Map
         </program>
+        <programBlock>
+          .OpCodes
+        </programBlock>
         <programBytes>
           .WordStack
         </programBytes>

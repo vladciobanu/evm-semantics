@@ -52,6 +52,7 @@ In the comments next to each cell, we've marked which component of the YellowPap
 
           <callState>
             <program>      .Map       </program>            // I_b
+            <programBlock> .OpCodes   </programBlock>
             <programBytes> .WordStack </programBytes>
 
             // I_*
@@ -276,6 +277,22 @@ OpCode Execution
 
 ### Execution Macros
 
+-   `#nextProgramBlock` will load the next basic block of the current program, assuming that if no block is present at the given program counter that execution ended successfully.
+
+```k
+    syntax InternalOp ::= "#nextProgramBlock"
+ // -----------------------------------------
+    rule <k> #nextProgramBlock => . ... </k>
+         <programBlock> _ => OPS </programBlock>
+         <pc> PCOUNT </pc>
+         <program> ... PCOUNT |-> OPS ... </program>
+
+    rule <k> #nextProgramBlock => #end EVMC_SUCCESS ... </k>
+         <pc> PCOUNT </pc>
+         <program> PGM </program>
+      requires notBool (PCOUNT in_keys(PGM))
+```
+
 -   `#execute` calls `#next` repeatedly until it recieves an `#end`.
 -   `#execTo` executes until the next opcode is one of the specified ones.
 
@@ -288,32 +305,15 @@ OpCode Execution
     syntax InternalOp ::= "#execTo" Set
  // -----------------------------------
     rule <k> (. => #next) ~> #execTo OPS ... </k>
-         <pc> PCOUNT </pc>
-         <program> ... PCOUNT |-> OP ... </program>
+         <programBlock> OP ; _ </programBlock>
       requires notBool (OP in OPS)
 
     rule <k> #execTo OPS => . ... </k>
-         <pc> PCOUNT </pc>
-         <program> ... PCOUNT |-> OP ... </program>
+         <programBlock> OP ; _ </programBlock>
       requires OP in OPS
 
-    rule <k> #execTo OPS => #end EVMC_SUCCESS ... </k>
-         <pc> PCOUNT </pc>
-         <program> PGM </program>
-      requires notBool PCOUNT in keys(PGM)
-```
-
-Execution follows a simple cycle where first the state is checked for exceptions, then if no exceptions will be thrown the opcode is run.
-When the `#next` operator cannot lookup the next opcode, it assumes that the end of execution has been reached.
-
-```k
-    syntax InternalOp ::= "#next"
- // -----------------------------
-    rule <k> #next => #end EVMC_SUCCESS ... </k>
-         <pc> PCOUNT </pc>
-         <program> PGM </program>
-         <output> _ => .WordStack </output>
-      requires notBool (PCOUNT in_keys(PGM))
+    rule <k> (. => #nextProgramBlock) ~> #execTo OPS ... </k>
+         <programBlock> .OpCodes </programBlock>
 ```
 
 ### Single Step
@@ -326,6 +326,11 @@ The `#next` operator executes a single step by:
 4.  reverts state if any of the above steps threw an exception.
 
 ```k
+    syntax InternalOp ::= "#next"
+ // -----------------------------
+    rule <k> (. => #nextProgramBlock) ~> #next ... </k>
+         <programBlock> .OpCodes </programBlock>
+
     rule <mode> EXECMODE </mode>
          <k> #next
           => #pushCallStack ~> #stackNeeded? [ OP ]
@@ -336,8 +341,7 @@ The `#next` operator executes a single step by:
           ~> #? #dropCallStack : #popCallStack ?#
          ...
          </k>
-         <pc> PCOUNT </pc>
-         <program> ... PCOUNT |-> OP ... </program>
+         <programBlock> OP ; OPS => OPS </programBlock>
       requires EXECMODE in (SetItem(NORMAL) SetItem(VMTESTS))
 ```
 
@@ -706,15 +710,33 @@ Operator `#revOps` can be used to reverse a program.
 ### Converting to/from `Map` Representation
 
 ```k
-    syntax Map ::= #asMapOpCodes    ( OpCodes )             [function]
-                 | #asMapOpCodesAux ( OpCodes , Int , Map ) [function]
- // ------------------------------------------------------------------
-    rule #asMapOpCodes( OPS ) => #asMapOpCodesAux(OPS, 0, .Map)
+    syntax Map ::= #asMapOpCodes    ( OpCodes )          [function]
+                 | #asMapOpCodesAux ( List , Int , Map ) [function]
+ // ---------------------------------------------------------------
+    rule #asMapOpCodes( OPS ) => #asMapOpCodesAux(#basicBlocks(OPS), 0, .Map)
 
-    rule #asMapOpCodesAux( .OpCodes , N , MAP ) => MAP
+    rule #asMapOpCodesAux( .List , N , MAP ) => MAP
 
-    rule #asMapOpCodesAux( OP:OpCode ; OPS , N                   , MAP            )
-      => #asMapOpCodesAux(             OPS , N +Int #widthOp(OP) , MAP (N |-> OP) )
+    rule #asMapOpCodesAux( ListItem(OPS) BBLOCKS , N                     , MAP             )
+      => #asMapOpCodesAux(               BBLOCKS , N +Int #widthOps(OPS) , MAP (N |-> OPS) )
+
+    syntax List ::= #basicBlocks    ( OpCodes )                  [function]
+                  | #basicBlocksAux ( OpCodes , OpCodes , List ) [function]
+ // -----------------------------------------------------------------------
+    rule #basicBlocks(OPS) => #basicBlocksAux(OPS, .OpCodes, .List)
+
+    rule #basicBlocksAux(.OpCodes , .OpCodes , BBLOCKS) => BBLOCKS
+    rule #basicBlocksAux(.OpCodes , OP ; OPS , BBLOCKS) => BBLOCKS ListItem(#revOps(OP ; OPS))
+
+    rule #basicBlocksAux( OP ; OPS ,      OPS' , BBLOCKS )
+      => #basicBlocksAux(      OPS , OP ; OPS' , BBLOCKS )
+      requires OP =/=K JUMPDEST
+
+    rule #basicBlocksAux( JUMPDEST ; OPS , .OpCodes            , BBLOCKS )
+      => #basicBlocksAux(            OPS , JUMPDEST ; .OpCodes , BBLOCKS )
+
+    rule #basicBlocksAux( JUMPDEST ; OPS , OP' ; OPS'          , BBLOCKS                               )
+      => #basicBlocksAux(            OPS , JUMPDEST ; .OpCodes , BBLOCKS ListItem(#revOps(OP' ; OPS')) )
 ```
 
 EVM OpCodes
@@ -1036,13 +1058,10 @@ The `JUMP*` family of operations affect the current program counter.
 
     syntax UnStackOp ::= "JUMP"
  // ---------------------------
-    rule <k> JUMP DEST => . ... </k>
-         <pc> _ => DEST </pc>
-         <program> ... DEST |-> JUMPDEST ... </program>
-
-    rule <k> JUMP DEST => #end EVMC_BAD_JUMP_DESTINATION ... </k>
-         <program> ... DEST |-> OP ... </program>
-      requires OP =/=K JUMPDEST
+    rule <k> JUMP DEST => #checkJumpdest ... </k>
+         <programBlock> _ => OPS  </programBlock>
+         <pc>    _ => DEST </pc>
+         <program> ... DEST |-> OPS ... </program>
 
     rule <k> JUMP DEST => #end EVMC_BAD_JUMP_DESTINATION ... </k>
          <program> PGM </program>
@@ -1055,6 +1074,15 @@ The `JUMP*` family of operations affect the current program counter.
 
     rule <k> JUMPI DEST I => JUMP DEST ... </k>
       requires I =/=Int 0
+
+    syntax InternalOp ::= "#checkJumpdest"
+ // --------------------------------------
+    rule <k> #checkJumpdest => . ... </k>
+         <programBlock> JUMPDEST ; _ </programBlock>
+
+    rule <k> #checkJumpdest => #end EVMC_BAD_JUMP_DESTINATION ... </k>
+         <programBlock> OP ; _ </programBlock>
+      requires OP =/=K JUMPDEST
 ```
 
 ### `STOP`, `REVERT`, and `RETURN`
@@ -1284,7 +1312,7 @@ The various `CALL*` (and other inter-contract control flow) operations will be d
          </account>
 
     rule <k> #call ACCTFROM ACCTTO ACCTCODE VALUE APPVALUE ARGS STATIC
-          => #callWithCode ACCTFROM ACCTTO (0 |-> #precompiled(ACCTCODE)) .WordStack VALUE APPVALUE ARGS STATIC
+          => #callWithCode ACCTFROM ACCTTO (0 |-> #precompiled(ACCTCODE) ; .OpCodes) .WordStack VALUE APPVALUE ARGS STATIC
          ...
          </k>
          <schedule> SCHED </schedule>
@@ -1335,12 +1363,13 @@ The various `CALL*` (and other inter-contract control flow) operations will be d
 
     syntax KItem ::= "#initVM"
  // --------------------------
-    rule <k> #initVM    => . ...      </k>
-         <pc>         _ => 0          </pc>
-         <memoryUsed> _ => 0          </memoryUsed>
-         <output>     _ => .WordStack </output>
-         <wordStack>  _ => .WordStack </wordStack>
-         <localMem>   _ => .Map       </localMem>
+    rule <k> #initVM      => . ...      </k>
+         <pc>           _ => 0          </pc>
+         <programBlock> _ => .OpCodes   </programBlock>
+         <memoryUsed>   _ => 0          </memoryUsed>
+         <output>       _ => .WordStack </output>
+         <wordStack>    _ => .WordStack </wordStack>
+         <localMem>     _ => .Map       </localMem>
 
     syntax KItem ::= "#endCall"
  // ---------------------------

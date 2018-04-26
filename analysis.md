@@ -53,14 +53,13 @@ We'll need to make summaries of the state which collect information about how mu
 ```{.k .standalone}
     rule <mode> GASANALYZE </mode>
          <k> #next => #setMode NORMAL ~> #execTo #gasBreaks ~> #setMode GASANALYZE ... </k>
-         <pc> PCOUNT </pc>
-         <program> ... PCOUNT |-> OP ... </program>
+         <programBlock> OP ; _ </programBlock>
       requires notBool (OP in #gasBreaks)
 
     rule <mode> GASANALYZE </mode>
          <k> #next => #endSummary ~> #setPC (PCOUNT +Int 1) ~> #setGas 1000000000 ~> #beginSummary ~> #next ... </k>
          <pc> PCOUNT </pc>
-         <program> ... PCOUNT |-> OP ... </program>
+         <programBlock> OP ; OPS => OPS </programBlock>
       requires OP in #gasBreaks
 
     syntax Set ::= "#gasBreaks" [function]
