@@ -274,8 +274,8 @@ test-interactive: $(interactive_tests:=.test)
 tests/interactive/%.json.test: tests/interactive/%.json build-ocaml build-java
 	$(TEST) $< tests/templates/output-success.json
 
-tests/interactive/gas-analysis/%.evm.test: tests/interactive/gas-analysis/%.evm tests/interactive/gas-analysis/%.evm.out build-ocaml build-java
-	MODE=GASANALYZE $(TEST) $< $<.out
+tests/interactive/gas-analysis/%.evm.test: build-ocaml build-java
+	MODE=GASANALYZE $(TEST) $(dir $@)$*.evm $(dir $@)$*.evm.out
 
 # ProofTests
 
