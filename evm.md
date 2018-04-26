@@ -581,6 +581,11 @@ The arguments to `PUSH` must be skipped over (as they are inline), and the opcod
     rule #widthOp(PUSH(N, _)) => 1 +Int N
     rule #widthOp(OP)         => 1        requires notBool isPushOp(OP)
 
+    syntax Int ::= #widthOps ( OpCodes ) [function]
+ // -----------------------------------------------
+    rule #widthOps ( .OpCodes ) => 0
+    rule #widthOps ( OP ; OPS ) => #widthOp(OP) +Int #widthOps(OPS)
+
     syntax Bool ::= isJumpOp ( OpCode ) [function]
  // ----------------------------------------------
     rule isJumpOp(OP) => OP ==K JUMP orBool OP ==K JUMPI
