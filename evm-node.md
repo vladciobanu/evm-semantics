@@ -139,7 +139,7 @@ Because the same account may be loaded more than once, implementations of this i
           => #loadAccount #newAddr(ACCTFROM, NONCE -Int 1)
           ~> #create ACCTFROM #newAddr(ACCTFROM, NONCE -Int 1) VALUE #parseByteStackRaw(ARGS)
           ~> #codeDeposit #newAddr(ACCTFROM, NONCE -Int 1)
-          ~> #endCreate
+          ~> #top
          ...
          </k>
          <schedule> SCHED </schedule>
@@ -183,11 +183,11 @@ Because the same account may be loaded more than once, implementations of this i
       requires ACCTFROM in ACCTS
 ```
 
--   `#endCreate` and `#endVM` clean up after the transaction finishes and store the return status code of the top level call frame on the top of the `<k>` cell.
+-   `#top` and `#endVM` clean up after the transaction finishes and store the return status code of the top level call frame on the top of the `<k>` cell.
 
 ```{.k .node}
-    syntax KItem ::= "#endVM" | "#endCreate"
- // ----------------------------------------
+    syntax KItem ::= "#endVM" | "#top"
+ // ----------------------------------
     rule <statusCode> _:ExceptionalStatusCode </statusCode>
          <k> #halt ~> #endVM => #popCallStack ~> #popWorldState ~> 0 </k>
          <output> _ => .WordStack </output>
@@ -200,7 +200,7 @@ Because the same account may be loaded more than once, implementations of this i
          <k> #halt ~> #endVM => #popCallStack ~> #dropWorldState ~> #refund GAVAIL ~> 1 </k>
          <gas> GAVAIL </gas>
 
-    rule <k> #endCreate => W ... </k> <wordStack> W : WS </wordStack>
+    rule <k> #top => W ... </k> <wordStack> W : WS </wordStack>
 ```
 
 ### Primitive operations expected to exist by the blockchain-k-plugin
