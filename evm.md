@@ -1071,9 +1071,11 @@ The `JUMP*` family of operations affect the current program counter.
  // -----------------------------
     rule <k> JUMPI DEST 0 => . ... </k>
          <pc> PCOUNT => PCOUNT +Int 1 </pc>
+      [transition]
 
     rule <k> JUMPI DEST I => JUMP DEST ... </k>
       requires I =/=Int 0
+      [transition]
 
     syntax InternalOp ::= "#checkJumpdest"
  // --------------------------------------
