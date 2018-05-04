@@ -333,12 +333,11 @@ The `#next` operator executes a single step by:
 
     rule <mode> EXECMODE </mode>
          <k> #next
-          => #pushCallStack ~> #stackNeeded? [ OP ]
-                            ~> #static?      [ OP ]
-                            ~> #load         [ OP ]
-                            ~> #exec         [ OP ]
-                            ~> #pc           [ OP ]
-          ~> #? #dropCallStack : #popCallStack ?#
+          => #stackNeeded? [ OP ]
+          ~> #static?      [ OP ]
+          ~> #load         [ OP ]
+          ~> #exec         [ OP ]
+          ~> #pc           [ OP ]
          ...
          </k>
          <programBlock> OP ; OPS => OPS </programBlock>
