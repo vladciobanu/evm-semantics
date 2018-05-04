@@ -1816,40 +1816,41 @@ Gas Calculation
 ```k
     syntax InternalOp ::= "#gas" "[" OpCode "]"
  // -------------------------------------------
-    rule <k> #gas [ OP ] => #memory(OP, MU) ~> #deductMemory ~> #gasExec(SCHED, OP) ... </k>
-         <memoryUsed> MU </memoryUsed>
-         <schedule> SCHED </schedule>
 ```
 
 ### Memory Expansion
 
 Memory consumed is tracked to determine the appropriate amount of gas to charge for each operation.
-In the YellowPaper, each opcode is defined to consume zero gas unless specified otherwise next to the semantics of the opcode (appendix H).
+Here, `#gas` calculates the memory delta of a given opcode, then deducts the intrinsic execution gas of it.
 
 -   `#memory` computes the new memory size given the old size and next operator (with its arguments).
 -   `#memDelta` is the function `M` in appendix H of the YellowPaper which helps track the memory used.
 
 ```k
-    syntax Int ::= #memory ( OpCode , Int ) [function]
- // --------------------------------------------------
-    rule #memory ( MLOAD   INDEX   , MU ) => #memDelta(MU, INDEX, 32)
-    rule #memory ( MSTORE  INDEX _ , MU ) => #memDelta(MU, INDEX, 32)
-    rule #memory ( MSTORE8 INDEX _ , MU ) => #memDelta(MU, INDEX, 1)
+    rule <k> #gas [ MLOAD   INDEX       ] => #memDelta(MU, INDEX, 32) ~> #deductMemory ~> #gasExec(SCHED , MLOAD   INDEX      ) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ MSTORE  INDEX VALUE ] => #memDelta(MU, INDEX, 32) ~> #deductMemory ~> #gasExec(SCHED , MSTORE  INDEX VALUE) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ MSTORE8 INDEX VALUE ] => #memDelta(MU, INDEX,  1) ~> #deductMemory ~> #gasExec(SCHED , MSTORE8 INDEX VALUE) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule #memory ( SHA3   START WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( LOG(_) START WIDTH , MU ) => #memDelta(MU, START, WIDTH)
+    rule <k> #gas [ SHA3   START WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , SHA3   START WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ LOG(N) START WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , LOG(N) START WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule #memory ( CODECOPY       START _ WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( EXTCODECOPY  _ START _ WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( CALLDATACOPY   START _ WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( RETURNDATACOPY START _ WIDTH , MU ) => #memDelta(MU, START, WIDTH)
+    rule <k> #gas [ CODECOPY       START V2 WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , CODECOPY       START V2 WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ EXTCODECOPY V1 START V2 WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , EXTCODECOPY V1 START V2 WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ CALLDATACOPY   START V2 WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , CALLDATACOPY   START V2 WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ RETURNDATACOPY START V2 WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , RETURNDATACOPY START V2 WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule #memory ( CREATE _ START WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( RETURN   START WIDTH , MU ) => #memDelta(MU, START, WIDTH)
-    rule #memory ( REVERT   START WIDTH , MU ) => #memDelta(MU, START, WIDTH)
+    rule <k> #gas [ CREATE V1 START WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , CREATE V1 START WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ RETURN    START WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , RETURN    START WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ REVERT    START WIDTH ] => #memDelta(MU, START, WIDTH) ~> #deductMemory ~> #gasExec(SCHED , REVERT    START WIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
 
-    rule #memory ( COP:CallOp     _ _ _ ARGSTART ARGWIDTH RETSTART RETWIDTH , MU ) => #memDelta(#memDelta(MU, ARGSTART, ARGWIDTH), RETSTART, RETWIDTH)
-    rule #memory ( CSOP:CallSixOp _ _   ARGSTART ARGWIDTH RETSTART RETWIDTH , MU ) => #memDelta(#memDelta(MU, ARGSTART, ARGWIDTH), RETSTART, RETWIDTH)
+    rule <k> #gas [ COP:CallOp     GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH ] => #memDelta(#memDelta(MU, ARGSTART, ARGWIDTH), RETSTART, RETWIDTH) ~> #deductMemory ~> #gasExec(SCHED , COP:CallOp     GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+    rule <k> #gas [ CSOP:CallSixOp GCAP ACCTTO       ARGSTART ARGWIDTH RETSTART RETWIDTH ] => #memDelta(#memDelta(MU, ARGSTART, ARGWIDTH), RETSTART, RETWIDTH) ~> #deductMemory ~> #gasExec(SCHED , CSOP:CallSixOp GCAP ACCTTO       ARGSTART ARGWIDTH RETSTART RETWIDTH) ... </k> <memoryUsed> MU </memoryUsed> <schedule> SCHED </schedule>
+```
+
+Opcodes not listed above do not increase memory, and can go straight to calculating execution gas.
+
+```k
+    rule <k> #gas [ OP ] => #gasExec(SCHED, OP) ... </k> <schedule> SCHED </schedule> [owise]
 ```
 
 Grumble grumble, K sucks at `owise`.
