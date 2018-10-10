@@ -121,7 +121,7 @@ In the comments next to each cell, we've marked which component of the YellowPap
               <acctID>  0                      </acctID>
               <balance> 0                      </balance>
               <code>    .WordStack:AccountCode </code>
-              <storage> .Map                   </storage>
+              <storage> .IMap                  </storage>
               <nonce>   0                      </nonce>
             </account>
           </accounts>
@@ -840,7 +840,7 @@ These are just used by the other operators for shuffling local execution state a
            <acctID>  ACCT       </acctID>
            <code>    .WordStack </code>
            <nonce>   0          </nonce>
-           <storage> _ => .Map  </storage>
+           <storage> _ => .IMap </storage>
            ...
          </account>
 
@@ -1284,6 +1284,7 @@ These rules reach into the network state and load/store from account storage:
 ```k
     syntax UnStackOp ::= "SLOAD"
  // ----------------------------
+/*
     rule <k> SLOAD INDEX => 0 ~> #push ... </k>
          <id> ACCT </id>
          <account>
@@ -1299,9 +1300,19 @@ These rules reach into the network state and load/store from account storage:
            <storage> ... INDEX |-> VALUE ... </storage>
            ...
          </account>
+*/
+
+    rule <k> SLOAD INDEX => selectIMap(STORAGE, INDEX) ~> #push ... </k>
+         <id> ACCT </id>
+         <account>
+           <acctID> ACCT </acctID>
+           <storage> STORAGE </storage>
+           ...
+         </account>
 
     syntax BinStackOp ::= "SSTORE"
  // ------------------------------
+/*
     rule <k> SSTORE INDEX VALUE => . ... </k>
          <id> ACCT </id>
          <account>
@@ -1324,6 +1335,15 @@ These rules reach into the network state and load/store from account storage:
            ...
          </account>
       requires notBool (INDEX in_keys(STORAGE))
+*/
+
+    rule <k> SSTORE INDEX VALUE => . ... </k>
+         <id> ACCT </id>
+         <account>
+           <acctID> ACCT </acctID>
+           <storage> STORAGE => storeIMap(STORAGE, INDEX, VALUE) </storage>
+           ...
+         </account>
 ```
 
 ### Call Operations
@@ -2600,5 +2620,18 @@ After interpreting the strings representing programs as a `WordStack`, it should
     rule #dasmOpCode( 254,     _ ) => INVALID
     rule #dasmOpCode( 255,     _ ) => SELFDESTRUCT
     rule #dasmOpCode(   W,     _ ) => UNDEFINED(W) [owise]
+
+
+syntax IMap [smt-prelude]
+
+syntax IMap ::= ".IMap"
+
+syntax IMap ::= storeIMap(IMap, Int, Int) [function, smtlib(store)]
+
+syntax Int ::= selectIMap(IMap, Int) [function, smtlib(select)]
+
+rule 0 <=Int selectIMap(_,_)             => true
+rule         selectIMap(_,_) <Int pow256 => true
+
 endmodule
 ```
