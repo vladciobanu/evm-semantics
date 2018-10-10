@@ -471,12 +471,14 @@ The individual fields of the accounts are dealt with here.
            ...
          </account>
 
+/*
     rule <k> load "account" : { ACCT : { "storage" : (STORAGE:Map) } } => . ... </k>
          <account>
            <acctID> ACCT </acctID>
            <storage> _ => STORAGE </storage>
            ...
          </account>
+*/
 ```
 
 Here we load the environmental information.
@@ -683,6 +685,7 @@ The `"rlp"` key loads the block information.
            ...
          </account>
 
+/*
     rule <k> check "account" : { ACCT : { "storage" : (STORAGE:Map) } } => . ... </k>
          <account>
            <acctID> ACCT </acctID>
@@ -690,6 +693,7 @@ The `"rlp"` key loads the block information.
            ...
          </account>
       requires #removeZeros(ACCTSTORAGE) ==K STORAGE
+*/
 
     rule <k> check "account" : { ACCT : { "code" : (CODE:WordStack) } } => . ... </k>
          <account>
