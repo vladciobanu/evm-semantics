@@ -332,7 +332,7 @@ split-proof-tests: tests/proofs/make.timestamp
 # Media
 # -----
 
-media: sphinx 2017-devcon3 2018-csf
+media: sphinx 2017-devcon3 2018-csf 2018-devcon4
 
 # Presentations
 
@@ -345,6 +345,7 @@ $(BUILD_DIR)/media/metropolis/beamerthememetropolis.sty:
 
 2017-devcon3: $(BUILD_DIR)/media/2017-devcon3.pdf
 2018-csf:     $(BUILD_DIR)/media/2018-csf.pdf
+2018-devcon4: $(BUILD_DIR)/media/2018-devcon4.pdf
 
 $(BUILD_DIR)/media/%.pdf: media/%.md media/citations.md
 	@echo "== media: $@"
