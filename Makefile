@@ -284,7 +284,7 @@ tests/ethereum-tests/VMTests/%.test: tests/ethereum-tests/VMTests/% build-ocaml
 test-haskell: $(quick_vm_tests:=.haskelltest)
 
 tests/ethereum-tests/VMTests/%.haskelltest: tests/ethereum-tests/VMTests/% build-haskell
-	$(TEST) --backend haskell $<
+	MODE=VMTESTS SCHEDULE=DEFAULT $(TEST) --backend haskell $<
 
 # BlockchainTests
 
