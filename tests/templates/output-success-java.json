@@ -149,7 +149,7 @@
         .Set
       </activeAccounts>
       <accounts>
-        .Map
+        .AccountCellMap
       </accounts>
       <txOrder>
         .List
@@ -158,7 +158,7 @@
         .List
       </txPending>
       <messages>
-        .Map
+        .MessageCellMap
       </messages>
     </network>
   </ethereum>
