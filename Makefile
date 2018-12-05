@@ -25,7 +25,7 @@ KORE_SUBMODULE_SRC:=$(KORE_SUBMODULE)/src/main/haskell/kore
 		build build-ocaml build-java build-node build-kore defn split-tests \
 		test test-all test-concrete test-all-concrete test-conformance test-slow-conformance test-all-conformance \
 		test-vm test-slow-vm test-all-vm test-bchain test-slow-bchain test-all-bchain \
-		test-proof test-interactive test-haskell \
+		test-proof test-interactive \
 		metropolis-theme 2017-devcon3 sphinx
 .SECONDARY:
 
@@ -226,7 +226,8 @@ endif
 # -----
 
 # Override this with `make TEST=echo` to list tests instead of running
-TEST=./kevm test-profile
+TEST_BACKEND:=ocaml
+TEST:=./kevm test-profile
 
 test-all: test-all-concrete test-all-proof
 test: test-concrete test-proof test-java
@@ -279,12 +280,7 @@ test-slow-vm: $(slow_vm_tests:=.test)
 test-vm: $(quick_vm_tests:=.test)
 
 tests/ethereum-tests/VMTests/%.test: tests/ethereum-tests/VMTests/% build-ocaml
-	MODE=VMTESTS SCHEDULE=DEFAULT $(TEST) $<
-
-test-haskell: $(quick_vm_tests:=.haskelltest)
-
-tests/ethereum-tests/VMTests/%.haskelltest: tests/ethereum-tests/VMTests/% build-haskell
-	MODE=VMTESTS SCHEDULE=DEFAULT $(TEST) --backend haskell $<
+	MODE=VMTESTS SCHEDULE=DEFAULT $(TEST) --backend $(TEST_BACKEND) $<
 
 # BlockchainTests
 
@@ -305,7 +301,7 @@ test-slow-bchain: $(slow_bchain_tests:=.test)
 test-bchain: $(quick_bchain_tests:=.test)
 
 tests/ethereum-tests/BlockchainTests/%.test: tests/ethereum-tests/BlockchainTests/% build-ocaml
-	$(TEST) $<
+	$(TEST) --backend $(TEST_BACKEND) $<
 
 # InteractiveTests
 
@@ -315,10 +311,10 @@ interactive_tests:=$(wildcard tests/interactive/*.json) \
 test-interactive: $(interactive_tests:=.test)
 
 tests/interactive/%.json.test: tests/interactive/%.json build-ocaml build-java
-	$(TEST) $<
+	$(TEST) --backend $(TEST_BACKEND) $<
 
 tests/interactive/gas-analysis/%.evm.test: tests/interactive/gas-analysis/%.evm tests/interactive/gas-analysis/%.evm.out build-ocaml build-java
-	MODE=GASANALYZE $(TEST) $<
+	MODE=GASANALYZE $(TEST) --backend $(TEST_BACKEND) $<
 
 # ProofTests
 
