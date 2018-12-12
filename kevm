@@ -39,7 +39,7 @@ run_env() {
     export cSCHEDULE="\`${SCHEDULE:-BYZANTIUM}_EVM\`(.KList)"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
     export LD_LIBRARY_PATH="$release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
-    eval $(opam config env)
+    # eval $(opam config env)
 }
 
 # Runners
