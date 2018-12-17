@@ -1,0 +1,11 @@
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$2 (file:/home/vlad/code/evm-semantics/.build/k/k-distribution/target/release/k/lib/java/guice-4.0-beta5.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
+WARNING: Please consider reporting this to the maintainers of com.google.inject.internal.cglib.core.$ReflectUtils$2
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+Reading the input file TimeSpec {sec = 0, nsec = 40997}
+Parsing the file TimeSpec {sec = 1, nsec = 220491945}
+Verifying the definition TimeSpec {sec = 0, nsec = 893974114}
+Reading the input file TimeSpec {sec = 0, nsec = 28767}
+Parsing the file TimeSpec {sec = 0, nsec = 4018428}
+Verifying the pattern TimeSpec {sec = 0, nsec = 2850199}
