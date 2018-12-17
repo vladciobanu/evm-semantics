@@ -1,0 +1,37 @@
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$2 (file:/home/vlad/code/evm-semantics/.build/k/k-distribution/target/release/k/lib/java/guice-4.0-beta5.jar), to method java.lang.ClassLoader.defineClass(java.lang.String,byte(),int,int,java.security.ProtectionDomain)
+WARNING: Please consider reporting this to the maintainers of com.google.inject.internal.cglib.core.$ReflectUtils$2
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+Reading the input file TimeSpec (sec = 0, nsec = 41943)
+Parsing the file TimeSpec (sec = 0, nsec = 950191854)
+Verifying the definition TimeSpec (sec = 0, nsec = 845563261)
+Reading the input file TimeSpec (sec = 0, nsec = 30283)
+Parsing the file TimeSpec (sec = 0, nsec = 3076108)
+Verifying the pattern TimeSpec (sec = 0, nsec = 2430209)
+kore-exec: While applying axiom:
+RulePattern (left = PurePattern ("Lbl#removeZeros(_,_)_EVM-DATA__List_Map"((),("Lbl_List_"((),("LblListItem"((),(Variable ("VarKEY":("SortKItem"())))),Variable ("VarL":("SortList"())))),"Lbl_Map_"((),("Lbl_|->_"((),(Variable ("VarKEY":("SortKItem"())),"inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"()))))),Variable ("VarREST":("SortMap"()))))))), right = PurePattern ("Lbl#removeZeros(_,_)_EVM-DATA__List_Map"((),(Variable ("VarL":("SortList"())),Variable ("VarREST":("SortMap"()))))), requires = GenericPredicate (PurePattern (T)), attributes = AxiomPatternAttributes (heatCool = Normal, productionID = ProductionID (getProductionID = Nothing), assoc = Assoc (isAssoc = False), comm = Comm (isComm = False), unit = Unit (isUnit = False), idem = Idem (isIdem = False)))
+to configuration:
+Predicated (term = PurePattern ("Lbl#removeZeros(_,_)_EVM-DATA__List_Map"((),(DomainValue ("SortList"(), domainValueChild = BuiltinList (fromList ("inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"())))))),DomainValue ("SortMap"(), domainValueChild = BuiltinMap (fromList ((PurePattern ("inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"())))),"inj"(("SortInt"(),"SortKItem"()),("115792089237316195423570985008687907853269984665640564039457584007913129639934":("SortInt"())))))))))), predicate = GenericPredicate (PurePattern (T)), substitution = NormalizedSubstitution ())
+Unexpected non-false predicate:
+
+GenericPredicate (PurePattern (
+    And ("PREDICATE"(),
+    
+    Equals ("SortList"(),"PREDICATE"(),
+        DomainValue ("SortList"(), domainValueChild = BuiltinList (
+            fromList ("inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"())))))),
+        "Lbl_List_"((),(
+            "LblListItem"((),(
+                Variable (ConfigurationVariable ("var_VarKEY_937671":("SortKItem"()))))),
+            Variable (ConfigurationVariable ("var_VarL_937669":("SortList"())))))),
+    
+    Equals ("SortMap"(),"PREDICATE"(),DomainValue ("SortMap"(), domainValueChild = BuiltinMap (fromList ((PurePattern ("inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"())))),"inj"(("SortInt"(),"SortKItem"()),("115792089237316195423570985008687907853269984665640564039457584007913129639934":("SortInt"()))))))),"Lbl_Map_"((),("Lbl_|->_"((),(Variable (ConfigurationVariable ("var_VarKEY_937671":("SortKItem"()))),"inj"(("SortInt"(),"SortKItem"()),("0":("SortInt"()))))),Variable (ConfigurationVariable ("var_VarREST_937670":("SortMap"())))))))))
+when substitutions:
+fromList ()
+do not cover all variables in left axiom:
+fromList ("VarKEY":("SortKItem"()),"VarL":("SortList"()),"VarREST":("SortMap"()))
+
+CallStack (from HasCallStack),:
+  error,,, called at src/Kore/Step/BaseStep.hs:446:14 in kore-0.0.1.0-DsCPXfzUQ4G8uat6EXrxvO:Kore.Step.BaseStep
+(Error), Critical: Haskell backend returned non-zero exit code
