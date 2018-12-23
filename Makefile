@@ -42,7 +42,6 @@ distclean: clean
 	opam switch remove 4.03.0+k --yes || true
 	cd $(K_SUBMODULE) \
 		&& mvn clean -q
-	git submodule deinit --force -- ./
 
 # Dependencies
 # ------------
@@ -75,7 +74,6 @@ $(PLUGIN_SUBMODULE)/make.timestamp:
 
 $(KORE_SUBMODULE)/make.timestamp:
 	@echo "== submodule: $@"
-	git submodule update --init -- $(KORE_SUBMODULE)
 	cd $(KORE_SUBMODULE) \
 		&& stack install --local-bin-path $(abspath $(KORE_SUBMODULE))/bin kore:exe:kore-exec
 	touch ${KORE_SUBMODULE}/make.timestamp
